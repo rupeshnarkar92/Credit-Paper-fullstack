@@ -23,9 +23,15 @@ class Settings(BaseSettings):
     ENCRYPTION_KEY: str = ""
     USE_ENCRYPTION: bool = False
 
-    class Config:
-        env_file = ".env"
-        extra = "forbid"
+    model_config = {"env_file": ".env", "extra": "forbid"}
+
+    @classmethod
+    def get_database_url(cls, url: str) -> str:
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if url.startswith("postgres://"):
+            return url.replace("postgres://", "postgresql+asyncpg://", 1)
+        return url
 
 
 @lru_cache
