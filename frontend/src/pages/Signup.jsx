@@ -57,7 +57,7 @@ export default function Signup() {
           <button
             type="button"
             className="btn btn-outline"
-            onClick={() => { window.location.href = '/api/auth/google' }}
+            onClick={() => { window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google` }}
           >
             Continue with Google
           </button>
