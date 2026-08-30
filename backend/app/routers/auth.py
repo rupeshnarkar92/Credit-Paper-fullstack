@@ -379,6 +379,8 @@ async def admin_list_users(secret: str = Query(...), db: AsyncSession = Depends(
 async def admin_delete_users(secret: str = Query(...), db: AsyncSession = Depends(get_db)):
     if secret != "admin_secret_2024":
         raise HTTPException(status_code=403, detail="Invalid secret")
+    from app.security.tokens import VerificationToken
+    await db.execute(VerificationToken.__table__.delete())
     result = await db.execute(select(User))
     users = result.scalars().all()
     count = len(users)
