@@ -245,6 +245,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "is_email_verified": current_user.is_email_verified,
         "is_active": current_user.is_active,
+        "is_super_admin": current_user.is_super_admin,
         "auth_provider": current_user.auth_provider,
         "created_at": current_user.created_at.isoformat(),
     })
@@ -364,29 +365,3 @@ async def google_callback(code: str = Query(...), db: AsyncSession = Depends(get
         path="/",
     )
     return response
-
-
-@router.get("/admin/users")
-async def admin_list_users(secret: str = Query(...), db: AsyncSession = Depends(get_db)):
-    if secret != "admin_secret_2024":
-        raise HTTPException(status_code=403, detail="Invalid secret")
-    result = await db.execute(select(User))
-    users = result.scalars().all()
-    return [{"id": str(u.id), "email": u.email, "verified": u.is_email_verified, "provider": u.auth_provider} for u in users]
-
-
-@router.delete("/admin/users")
-async def admin_delete_users(secret: str = Query(...), db: AsyncSession = Depends(get_db)):
-    if secret != "admin_secret_2024":
-        raise HTTPException(status_code=403, detail="Invalid secret")
-    from app.security.tokens import VerificationToken
-    from app.models.domain import Domain
-    await db.execute(Domain.__table__.delete())
-    await db.execute(VerificationToken.__table__.delete())
-    result = await db.execute(select(User))
-    users = result.scalars().all()
-    count = len(users)
-    for u in users:
-        await db.delete(u)
-    await db.commit()
-    return {"deleted": count}

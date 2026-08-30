@@ -9,6 +9,10 @@ import AuthCallback from './pages/AuthCallback'
 import Dashboard from './pages/Dashboard'
 import ProtectedTest from './pages/ProtectedTest'
 import ProtectedRoute from './components/ProtectedRoute'
+import SuperAdminLogin from './pages/SuperAdminLogin'
+import SuperAdminLayout from './layouts/SuperAdminLayout'
+import SuperAdminDashboard from './pages/SuperAdminDashboard'
+import SuperAdminUsers from './pages/SuperAdminUsers'
 
 function App() {
   return (
@@ -34,6 +38,16 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route path="/superadmin/login" element={<SuperAdminLogin />} />
+      <Route path="/superadmin" element={
+        <ProtectedRoute>
+          <SuperAdminLayout />
+        </ProtectedRoute>
+      }>
+        <Route path="dashboard" element={<SuperAdminDashboard />} />
+        <Route path="users" element={<SuperAdminUsers />} />
+      </Route>
     </Routes>
   )
 }

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.routers.auth import router as auth_router
+from app.routers.superadmin import router as superadmin_router
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -32,6 +33,7 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
 
 
 app.include_router(auth_router)
+app.include_router(superadmin_router)
 
 
 @app.get("/api/health")

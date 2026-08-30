@@ -104,3 +104,32 @@ export async function resetPassword(token, newPassword) {
     body: JSON.stringify({ token, new_password: newPassword }),
   })
 }
+
+export async function apiPost(path, body) {
+  if (USE_ENCRYPTION) {
+    const encrypted = await encrypt(body)
+    const data = await apiCall(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: encrypted }),
+    })
+    if (data.data) {
+      return await decrypt(data.data)
+    }
+    return data
+  }
+
+  return apiCall(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+export async function apiGet(path) {
+  const data = await apiCall(path)
+  if (data.data) {
+    return await decrypt(data.data)
+  }
+  return data
+}
