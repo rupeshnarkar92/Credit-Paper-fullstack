@@ -223,8 +223,8 @@ async def login(request: Request, db: AsyncSession = Depends(get_db)):
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=True,
+        samesite="none",
         max_age=1800,
         path="/",
     )
@@ -358,8 +358,8 @@ async def google_callback(code: str = Query(...), db: AsyncSession = Depends(get
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=True,
+        samesite="none",
         max_age=1800,
         path="/",
     )
