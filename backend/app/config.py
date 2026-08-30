@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     ENCRYPTION_KEY: str = ""
     USE_ENCRYPTION: bool = False
 
+    RESEND_API_KEY: str = ""
+
     model_config = {"env_file": ".env", "extra": "forbid"}
 
     @classmethod

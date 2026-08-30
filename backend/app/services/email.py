@@ -1,8 +1,6 @@
 import logging
-import smtplib
 import threading
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import httpx
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -10,20 +8,27 @@ settings = get_settings()
 
 
 def _send_sync(to_email: str, subject: str, html_content: str) -> bool:
+    api_key = getattr(settings, "RESEND_API_KEY", "")
+    from_email = settings.SMTP_FROM
+
+    if not api_key:
+        logger.error("RESEND_API_KEY not set")
+        print("EMAIL FAILED: RESEND_API_KEY not set")
+        return False
+
     try:
-        message = MIMEMultipart("alternative")
-        message["From"] = settings.SMTP_FROM
-        message["To"] = to_email
-        message["Subject"] = subject
-
-        html_part = MIMEText(html_content, "html")
-        message.attach(html_part)
-
-        server = smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT)
-        server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-        server.sendmail(settings.SMTP_FROM, to_email, message.as_string())
-        server.quit()
-
+        resp = httpx.post(
+            "https://api.resend.com/emails",
+            json={
+                "from": f"CreditPaper <{from_email}>",
+                "to": [to_email],
+                "subject": subject,
+                "html": html_content,
+            },
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=30,
+        )
+        resp.raise_for_status()
         logger.info(f"Email sent to {to_email}")
         return True
     except Exception as e:
@@ -40,7 +45,7 @@ def _background_send(to_email: str, subject: str, html_content: str, url: str, l
     print(f"  {label} LINK")
     print(f"  To: {to_email}")
     if sent:
-        print(f"  Method: Email sent via Gmail SMTP")
+        print(f"  Method: Email sent via Resend API")
         print(f"  Check your inbox (and spam folder)")
     else:
         print(f"  Method: Console (email failed)")
