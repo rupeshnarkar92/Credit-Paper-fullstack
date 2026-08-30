@@ -380,6 +380,8 @@ async def admin_delete_users(secret: str = Query(...), db: AsyncSession = Depend
     if secret != "admin_secret_2024":
         raise HTTPException(status_code=403, detail="Invalid secret")
     from app.security.tokens import VerificationToken
+    from app.models.domain import Domain
+    await db.execute(Domain.__table__.delete())
     await db.execute(VerificationToken.__table__.delete())
     result = await db.execute(select(User))
     users = result.scalars().all()
