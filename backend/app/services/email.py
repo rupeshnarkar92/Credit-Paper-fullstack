@@ -19,8 +19,7 @@ def _send_sync(to_email: str, subject: str, html_content: str) -> bool:
         html_part = MIMEText(html_content, "html")
         message.attach(html_part)
 
-        server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
-        server.starttls()
+        server = smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT)
         server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
         server.sendmail(settings.SMTP_FROM, to_email, message.as_string())
         server.quit()
