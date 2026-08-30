@@ -40,7 +40,6 @@ class Settings(BaseSettings):
             sslmode = params.pop("sslmode")[0]
             if sslmode in ("require", "prefer", "allow"):
                 params["ssl"] = ["require"]
-            del params["sslmode"]
 
         new_query = urlencode(params, doseq=True)
         return urlunparse(parsed._replace(query=new_query))
