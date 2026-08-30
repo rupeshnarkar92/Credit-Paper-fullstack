@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 
 class Settings(BaseSettings):
@@ -27,11 +28,22 @@ class Settings(BaseSettings):
 
     @classmethod
     def get_database_url(cls, url: str) -> str:
-        if url.startswith("postgresql://"):
-            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
         if url.startswith("postgres://"):
-            return url.replace("postgres://", "postgresql+asyncpg://", 1)
-        return url
+            url = url.replace("postgres://", "postgresql://", 1)
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+        parsed = urlparse(url)
+        params = parse_qs(parsed.query)
+
+        if "sslmode" in params:
+            sslmode = params.pop("sslmode")[0]
+            if sslmode in ("require", "prefer", "allow"):
+                params["ssl"] = ["require"]
+            del params["sslmode"]
+
+        new_query = urlencode(params, doseq=True)
+        return urlunparse(parsed._replace(query=new_query))
 
 
 @lru_cache
