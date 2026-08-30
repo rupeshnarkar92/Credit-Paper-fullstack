@@ -5,7 +5,7 @@ export default function AuthCallback() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetch('/api/auth/me', { credentials: 'include' })
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/me`, { credentials: 'include' })
       .then(async (res) => {
         if (res.ok) {
           navigate('/dashboard')

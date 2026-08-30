@@ -10,7 +10,7 @@ export default function ProtectedTest() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetch('/api/auth/me', { credentials: 'include' })
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/me`, { credentials: 'include' })
       .then((res) => res.json())
       .then(async (data) => {
         if (USE_ENCRYPTION && data.data) {

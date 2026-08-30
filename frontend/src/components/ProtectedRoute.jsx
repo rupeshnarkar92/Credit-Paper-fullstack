@@ -9,7 +9,7 @@ export default function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/auth/me', { credentials: 'include' })
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/me`, { credentials: 'include' })
       .then(async (res) => {
         if (!res.ok) throw new Error()
         const data = await res.json()

@@ -1,9 +1,10 @@
 import { encrypt, decrypt } from '../utils/encryption'
 
+const API_BASE = import.meta.env.VITE_API_URL || ''
 const USE_ENCRYPTION = import.meta.env.VITE_USE_ENCRYPTION === 'true'
 
-async function apiCall(url, options = {}) {
-  const response = await fetch(url, {
+async function apiCall(path, options = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     credentials: 'include',
   })
