@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     ENCRYPTION_KEY: str = ""
     USE_ENCRYPTION: bool = False
 
-    RESEND_API_KEY: str = "re_HUx4qK79_LZZLfENNX7gnTVHcPgseh7xK"
+    RESEND_API_KEY: str = ""
     RESEND_FROM_EMAIL: str = "noreply@onresend.com"
 
     model_config = {"env_file": ".env", "extra": "forbid"}
