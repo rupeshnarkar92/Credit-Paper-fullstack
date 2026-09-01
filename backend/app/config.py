@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     SMTP_HOST: str = "smtp.ethereal.email"
-    SMTP_PORT: int = 465
+    SMTP_PORT: int = 587
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
     SMTP_FROM: str = "noreply@creditpaper.com"
@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     USE_ENCRYPTION: bool = False
 
     RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = "noreply@onresend.com"
 
     model_config = {"env_file": ".env", "extra": "forbid"}
 

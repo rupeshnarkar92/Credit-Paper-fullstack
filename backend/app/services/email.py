@@ -1,58 +1,56 @@
 import logging
-import threading
-import httpx
+# import smtplib
+# import threading
+# from email.mime.text import MIMEText
+# from email.mime.multipart import MIMEMultipart
+import resend
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-
-def _send_sync(to_email: str, subject: str, html_content: str) -> bool:
-    api_key = getattr(settings, "RESEND_API_KEY", "")
-    from_email = settings.SMTP_FROM
-
-    if not api_key:
-        logger.error("RESEND_API_KEY not set")
-        print("EMAIL FAILED: RESEND_API_KEY not set")
-        return False
-
-    try:
-        resp = httpx.post(
-            "https://api.resend.com/emails",
-            json={
-                "from": f"CreditPaper <{from_email}>",
-                "to": [to_email],
-                "subject": subject,
-                "html": html_content,
-            },
-            headers={"Authorization": f"Bearer {api_key}"},
-            timeout=30,
-        )
-        resp.raise_for_status()
-        logger.info(f"Email sent to {to_email}")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to send email: {e}")
-        print(f"\nEMAIL FAILED: {e}\n")
-        return False
+resend.api_key = settings.RESEND_API_KEY
 
 
-def _background_send(to_email: str, subject: str, html_content: str, url: str, link_type: str) -> None:
-    sent = _send_sync(to_email, subject, html_content)
-
-    label = "VERIFICATION" if link_type == "verify" else "PASSWORD RESET"
-    print(f"\n{'='*60}")
-    print(f"  {label} LINK")
-    print(f"  To: {to_email}")
-    if sent:
-        print(f"  Method: Email sent via Resend API")
-        print(f"  Check your inbox (and spam folder)")
-    else:
-        print(f"  Method: Console (email failed)")
-        print(f"")
-        print(f"  Copy this link:")
-        print(f"  {url}")
-    print(f"{'='*60}\n")
+# ---------- SMTP CODE (kept for local environment) ----------
+# def _send_sync(to_email: str, subject: str, html_content: str) -> bool:
+#     try:
+#         message = MIMEMultipart("alternative")
+#         message["From"] = settings.SMTP_FROM
+#         message["To"] = to_email
+#         message["Subject"] = subject
+#         message.attach(MIMEText(html_content, "html"))
+#
+#         server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
+#         server.starttls()
+#         server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+#         server.sendmail(settings.SMTP_FROM, to_email, message.as_string())
+#         server.quit()
+#         logger.info(f"Email sent to {to_email}")
+#         return True
+#     except Exception as e:
+#         logger.error(f"Failed to send email: {e}")
+#         print(f"\nEMAIL FAILED: {e}\n")
+#         return False
+#
+#
+# def _background_send(to_email: str, subject: str, html_content: str, url: str, link_type: str) -> None:
+#     sent = _send_sync(to_email, subject, html_content)
+#
+#     label = "VERIFICATION" if link_type == "verify" else "PASSWORD RESET"
+#     print(f"\n{'='*60}")
+#     print(f"  {label} LINK")
+#     print(f"  To: {to_email}")
+#     if sent:
+#         print(f"  Method: Gmail SMTP")
+#         print(f"  Check your inbox (and spam folder)")
+#     else:
+#         print(f"  Method: Console (email failed)")
+#         print(f"")
+#         print(f"  Copy this link:")
+#         print(f"  {url}")
+#     print(f"{'='*60}\n")
+# ---------- END SMTP CODE ----------
 
 
 def send_verification_email(email: str, token: str) -> None:
@@ -124,9 +122,17 @@ def send_verification_email(email: str, token: str) -> None:
     </html>
     """
 
-    thread = threading.Thread(target=_background_send, args=(email, "Verify your email - CreditPaper", html, verification_url, "verify"))
-    thread.daemon = True
-    thread.start()
+    try:
+        resend.Emails.send({
+            "from": settings.RESEND_FROM_EMAIL,
+            "to": email,
+            "subject": "Verify your email - CreditPaper",
+            "html": html,
+        })
+        logger.info(f"Verification email sent to {email} via Resend")
+    except Exception as e:
+        logger.error(f"Failed to send verification email: {e}")
+        print(f"\nRESEND ERROR: {e}\n")
 
 
 def send_password_reset_email(email: str, token: str) -> None:
@@ -198,6 +204,14 @@ def send_password_reset_email(email: str, token: str) -> None:
     </html>
     """
 
-    thread = threading.Thread(target=_background_send, args=(email, "Reset your password - CreditPaper", html, reset_url, "reset"))
-    thread.daemon = True
-    thread.start()
+    try:
+        resend.Emails.send({
+            "from": settings.RESEND_FROM_EMAIL,
+            "to": email,
+            "subject": "Reset your password - CreditPaper",
+            "html": html,
+        })
+        logger.info(f"Password reset email sent to {email} via Resend")
+    except Exception as e:
+        logger.error(f"Failed to send password reset email: {e}")
+        print(f"\nRESEND ERROR: {e}\n")

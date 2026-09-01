@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse, JSONResponse
 from urllib.parse import urlencode
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from slowapi import Limiter
@@ -197,11 +198,32 @@ async def login(request: Request, db: AsyncSession = Depends(get_db)):
     if user.auth_provider == "google" or not user.password_hash:
         raise HTTPException(status_code=400, detail="This account uses Google Sign-In. Please login with Google instead.")
 
-    if not verify_password(password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Incorrect password. Please try again or reset your password.")
-
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Your account has been deactivated. Please contact support.")
+
+    now = datetime.now(timezone.utc)
+    if user.locked_until and user.locked_until > now:
+        remaining = int((user.locked_until - now).total_seconds() / 60)
+        raise HTTPException(status_code=423, detail=f"This account has been temporarily locked due to multiple failed sign-in attempts. Please try again in {remaining} minutes or contact your administrator.")
+    elif user.locked_until and user.locked_until <= now:
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        await db.commit()
+
+    if not verify_password(password, user.password_hash):
+        user.failed_login_attempts += 1
+        if user.failed_login_attempts >= 5:
+            user.locked_until = now + timedelta(hours=1)
+            await db.commit()
+            raise HTTPException(status_code=423, detail="This account has been temporarily locked due to multiple failed sign-in attempts. For security, please try again in 60 minutes or contact your administrator.")
+        await db.commit()
+        remaining = 5 - user.failed_login_attempts
+        raise HTTPException(status_code=401, detail=f"Invalid credentials. You have {remaining} attempt{'s' if remaining != 1 else ''} remaining before the account is temporarily locked.")
+
+    user.failed_login_attempts = 0
+    user.locked_until = None
+    user.last_login = now
+    await db.commit()
 
     if not user.is_email_verified:
         raise HTTPException(status_code=403, detail="Please verify your email before signing in. Check your inbox for the verification link.")
